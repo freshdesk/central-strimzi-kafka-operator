@@ -5,7 +5,12 @@
 package io.strimzi.kafka.init;
 
 import io.strimzi.operator.common.config.ConfigParameter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +24,8 @@ import static io.strimzi.operator.common.config.ConfigParameterParser.STRING;
  * Init Writer configuration
  */
 public class InitWriterConfig {
+    private static final Logger LOGGER = LogManager.getLogger(InitWriterConfig.class);
+    private static final String NAMESPACE_FILE_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/namespace";
     private static final Map<String, ConfigParameter<?>> CONFIG_VALUES = new HashMap<>();
     /**
      * Folder where the rackid file is written
@@ -40,6 +47,14 @@ public class InitWriterConfig {
      * The address type which should be preferred in the selection
      */
     public static final ConfigParameter<String> EXTERNAL_ADDRESS_TYPE = new ConfigParameter<>("EXTERNAL_ADDRESS_TYPE", STRING, null, CONFIG_VALUES);
+    /**
+     * FWSS secret prefix to filter secrets
+     */
+    public static final ConfigParameter<String> FWSS_SECRETS_PREFIX = new ConfigParameter<>("FWSS_SECRETS_PREFIX", STRING, "fwss", CONFIG_VALUES);
+    /**
+     * Authentication is of type sasl_scram_and_plain or others.
+     */
+    public static final ConfigParameter<String> AUTHENTICATION_IS_SASL_SCRAM_AND_PLAIN = new ConfigParameter<>("AUTHENTICATION_IS_SASL_SCRAM_AND_PLAIN", STRING, "false", CONFIG_VALUES);
     private final Map<String, Object> map;
 
     /**
@@ -113,6 +128,37 @@ public class InitWriterConfig {
         return get(EXTERNAL_ADDRESS_TYPE);
     }
 
+    /**
+     * @return FWSS secret prefix to filter secrets
+     */
+    public String getFwssSecretPrefix() {
+        return get(FWSS_SECRETS_PREFIX);
+    }
+
+    /**
+     * @return if Authentication is of type sasl_scram_and_plain or others.
+     */
+    public boolean getIfAuthenticationIsSaslScramAndPlain() {
+        String result = get(AUTHENTICATION_IS_SASL_SCRAM_AND_PLAIN);
+        return result.equals("true");
+    }
+
+    /**
+     * Reads the namespace from the file and returns it as a string.
+     *
+     * @return The namespace of the pod.
+     */
+    public String getNamespace() {
+        String namespace;
+        try {
+            namespace = new String(Files.readAllBytes(Paths.get(NAMESPACE_FILE_PATH))).trim();
+        } catch (IOException e) {
+            namespace = "";
+            LOGGER.error("Reading namespace file failed", e);
+        }
+        return namespace;
+    }
+
     @Override
     public String toString() {
         return "InitWriterConfig(" +
@@ -121,6 +167,9 @@ public class InitWriterConfig {
                 ",externalAddress=" + isExternalAddress() +
                 ",initFolder=" + getInitFolder() +
                 ",addressType=" + getAddressType() +
+                ",fwssSecretPrefix=" + getFwssSecretPrefix() +
+                ",authenticationIsSaslScramAndPlain=" + getIfAuthenticationIsSaslScramAndPlain() +
+                ",namespace=" + getNamespace() +
                 ")";
     }
 }
