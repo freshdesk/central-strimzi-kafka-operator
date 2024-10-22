@@ -40,7 +40,6 @@ public class Main {
             }
 
             // List all secrets in the current namespace
-//            SecretList secretList = client.secrets().inNamespace(namespace).list();
             SecretList secretList = client.secrets().inNamespace(namespace)
                     .withLabel("fwss.freshworks.com/secrets-managed", "true")
                     .list();
