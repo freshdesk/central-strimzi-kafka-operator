@@ -125,7 +125,7 @@ public class InitWriter {
             LOGGER.error("SecretList is empty");
             return false;
         }
-        List<Secret> secrets = client.secrets().inNamespace(namespace).list().getItems();
+        List<Secret> secrets = secretList.getItems();
         List<Secret> filteredSecrets = secrets.stream()
                 .filter(secret -> secret.getMetadata().getName().startsWith(config.getFwssSecretPrefix()))
                 .toList();
