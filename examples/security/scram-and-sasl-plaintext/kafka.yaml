@@ -1,0 +1,58 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: my-cluster
+spec:
+  kafka:
+    version: 3.8.0
+    replicas: 1
+    livenessProbe:
+      initialDelaySeconds: 3600
+      timeoutSeconds: 3600
+    template:
+      initContainer:
+        securityContext:
+          allowPrivilegeEscalation: true
+          readOnlyRootFilesystem: false
+        # env:
+        #   - name: JAVA_OPTS
+        #     value: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
+      # kafkaContainer:
+      #   env:
+      #   - name: KAFKA_DEBUG
+      #     value: "y"
+      #   - name: DEBUG_SUSPEND_FLAG
+      #     value: "y"
+      #   - name: JAVA_DEBUG_PORT
+      #     value: "5005"
+    rack:
+      topologyKey: kubernetes.io/hostname
+    brokerRackInitImage: localhost:5001/arunkbha/operator:latest
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+        authentication:
+          type: sasl_scram_and_plain
+    authorization:
+      type: simple
+      superUsers:
+        - admin
+    config:
+      offsets.topic.replication.factor: 1
+      transaction.state.log.replication.factor: 1
+      transaction.state.log.min.isr: 1
+      default.replication.factor: 1
+      min.insync.replicas: 1
+      inter.broker.protocol.version: "3.8"
+    storage:
+      type: ephemeral
+  zookeeper:
+    replicas: 3
+    storage:
+      type: ephemeral
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}
+
