@@ -1497,8 +1497,6 @@ public class KafkaCluster extends AbstractModel implements SupportsMetrics, Supp
 
         if (ListenersUtils.hasListenerWithSaslScramAndPLain(listeners)) {
             varList.add(ContainerUtils.createEnvVar(ENV_VAR_AUTHENTICATION_IS_SASL_SCRAM_AND_PLAIN, "true"));
-        } else {
-            varList.add(ContainerUtils.createEnvVar(ENV_VAR_AUTHENTICATION_IS_SASL_SCRAM_AND_PLAIN, "false"));
         }
 
         // Add shared environment variables used for all containers
