@@ -122,6 +122,7 @@ public class InitWriter {
     public boolean writeFwssSecretsToJaasConf(String namespace, SecretList secretList) {
 
         if (secretList.getItems().isEmpty()) {
+            // no fwss labeled secrets, then exit
             LOGGER.error("SecretList is empty");
             return false;
         }
@@ -130,6 +131,7 @@ public class InitWriter {
                 .filter(secret -> secret.getMetadata().getName().startsWith(config.getFwssSecretPrefix()))
                 .toList();
         if (filteredSecrets.isEmpty()) {
+            // no fwss secrets with the prefix, then exit
             LOGGER.error("No secrets starting with '{}' found.", config.getFwssSecretPrefix());
             return false;
         }
@@ -140,6 +142,7 @@ public class InitWriter {
                 .filter(secret -> secret.getMetadata().getName().startsWith(adminSecretPrefix))
                 .toList();
         if (filteredAdminSecrets.isEmpty()) {
+            // no fwss secrets with the admin prefix, then exit
             LOGGER.error("No admin secrets starting with '{}' found.", adminSecretPrefix);
             return false;
         } else if (filteredAdminSecrets.size() > 1) {
@@ -189,6 +192,7 @@ public class InitWriter {
                 isWritten = false;
             } else {
                 if (file.equals(FILE_JAAS_CONF)) {
+                    // to mask jaas secrets
                     LOGGER.info("Jaas information string of length {} written successfully to file {}", information.length(), file);
                 } else {
                     LOGGER.info("Information {} written successfully to file {}", information, file);
