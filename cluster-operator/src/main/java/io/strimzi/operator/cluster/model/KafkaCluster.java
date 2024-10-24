@@ -1496,6 +1496,7 @@ public class KafkaCluster extends AbstractModel implements SupportsMetrics, Supp
         }
 
         if (ListenersUtils.hasListenerWithSaslScramAndPLain(listeners)) {
+            // push this env to init container to be able to create the users
             varList.add(ContainerUtils.createEnvVar(ENV_VAR_AUTHENTICATION_IS_SASL_SCRAM_AND_PLAIN, "true"));
         }
 
