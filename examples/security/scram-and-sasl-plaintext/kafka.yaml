@@ -6,9 +6,9 @@ spec:
   kafka:
     version: 3.8.0
     replicas: 3
-    livenessProbe:
-      initialDelaySeconds: 3600
-      timeoutSeconds: 3600
+    # livenessProbe:
+    #   initialDelaySeconds: 3600
+    #   timeoutSeconds: 3600
     template:
       initContainer:
         securityContext:
@@ -42,9 +42,9 @@ spec:
     config:
       offsets.topic.replication.factor: 3
       transaction.state.log.replication.factor: 3
-      transaction.state.log.min.isr: 3
+      transaction.state.log.min.isr: 2
       default.replication.factor: 3
-      min.insync.replicas: 3
+      min.insync.replicas: 2
       inter.broker.protocol.version: "3.8"
     storage:
       type: ephemeral
