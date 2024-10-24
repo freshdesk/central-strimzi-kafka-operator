@@ -22,7 +22,7 @@ public class Main {
      * @param args  Array with arguments form the command line
      */
     public static void main(String[] args) {
-        LOGGER.info("AKBEEES");
+        LOGGER.info("FW Custom Init-kafka is starting");
         final String strimziVersion = Main.class.getPackage().getImplementationVersion();
         LOGGER.info("Init-kafka {} is starting", strimziVersion);
         InitWriterConfig config = InitWriterConfig.fromMap(System.getenv());
