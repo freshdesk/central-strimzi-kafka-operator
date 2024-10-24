@@ -5,6 +5,8 @@
 package io.strimzi.kafka.init;
 
 import io.fabric8.kubernetes.api.model.NodeAddress;
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretList;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.strimzi.api.kafka.model.kafka.listener.NodeAddressType;
 import io.strimzi.operator.common.model.NodeUtils;
@@ -29,6 +31,7 @@ public class InitWriter {
 
     protected final static String FILE_RACK_ID = "rack.id";
     protected final static String FILE_EXTERNAL_ADDRESS = "external.address";
+    protected final static String FILE_JAAS_CONF = "jaas.conf";
 
     /**
      * Constructs the InitWriter
@@ -110,6 +113,68 @@ public class InitWriter {
     }
 
     /**
+     * Write the fwss user secrets to jaas.conf
+     *
+     * @param namespace   The namespace in which kafka is running
+     * @param secretList   List of secrets in the namespace
+     * @return if the operation was executed successfully
+     */
+    public boolean writeFwssSecretsToJaasConf(String namespace, SecretList secretList) {
+
+        if (secretList.getItems().isEmpty()) {
+            // no fwss labeled secrets, then exit
+            LOGGER.error("SecretList is empty");
+            return false;
+        }
+        List<Secret> secrets = secretList.getItems();
+        List<Secret> filteredSecrets = secrets.stream()
+                .filter(secret -> secret.getMetadata().getName().startsWith(config.getFwssSecretPrefix()))
+                .toList();
+        if (filteredSecrets.isEmpty()) {
+            // no fwss secrets with the prefix, then exit
+            LOGGER.error("No secrets starting with '{}' found.", config.getFwssSecretPrefix());
+            return false;
+        }
+
+        String adminSecretPrefix = config.getFwssSecretPrefix() + "-admin";
+
+        List<Secret> filteredAdminSecrets = secrets.stream()
+                .filter(secret -> secret.getMetadata().getName().startsWith(adminSecretPrefix))
+                .toList();
+        if (filteredAdminSecrets.isEmpty()) {
+            // no fwss secrets with the admin prefix, then exit
+            LOGGER.error("No admin secrets starting with '{}' found.", adminSecretPrefix);
+            return false;
+        } else if (filteredAdminSecrets.size() > 1) {
+            LOGGER.error("More than one admin secrets starting with '{}' found", adminSecretPrefix);
+            return false;
+        }
+
+        Map.Entry<String, String> adminNameAndSecret = filteredAdminSecrets.get(0).getData().entrySet().iterator().next();
+        String adminUser = adminNameAndSecret.getKey();
+        String adminPassword = new String(java.util.Base64.getDecoder().decode(adminNameAndSecret.getValue())).trim();
+        StringBuilder jaasConfig = new StringBuilder();
+        jaasConfig.append("KafkaServer {\n");
+        jaasConfig.append("  org.apache.kafka.common.security.plain.PlainLoginModule required\n");
+        jaasConfig.append("  username").append("=\"").append(adminUser).append("\"\n");
+        jaasConfig.append("  password").append("=\"").append(adminPassword).append("\"\n");
+
+        for (Secret secret : filteredSecrets) {
+            Map<String, String> data = secret.getData();
+            for (Map.Entry<String, String> entry : data.entrySet()) {
+                String key = entry.getKey();
+                String value = new String(java.util.Base64.getDecoder().decode(entry.getValue())).trim();
+                jaasConfig.append("  user_").append(key).append("=\"").append(value).append("\"\n");
+            }
+        }
+        // Replace the last newline character jaasConfig with ";"
+        jaasConfig.setCharAt(jaasConfig.length() - 1, ';');
+        jaasConfig.append("\n};");
+
+        return write(FILE_JAAS_CONF, jaasConfig.toString());
+    }
+
+    /**
      * Write provided information into a file
      *
      * @param file          Target file
@@ -126,7 +191,12 @@ public class InitWriter {
                 LOGGER.error("Failed to write the information {} to file {}", information, file);
                 isWritten = false;
             } else {
-                LOGGER.info("Information {} written successfully to file {}", information, file);
+                if (file.equals(FILE_JAAS_CONF)) {
+                    // to mask jaas secrets
+                    LOGGER.info("Jaas information string of length {} written successfully to file {}", information.length(), file);
+                } else {
+                    LOGGER.info("Information {} written successfully to file {}", information, file);
+                }
                 isWritten = true;
             }
         } catch (IOException e) {
