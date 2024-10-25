@@ -166,7 +166,7 @@ public class InitWriter {
                 String value = new String(java.util.Base64.getDecoder().decode(entry.getValue())).trim();
                 if (!key.isEmpty() && !value.isEmpty()) {
                     jaasConfig.append("  user_").append(key).append("=\"").append(value).append("\"\n");
-                }else {
+                } else {
                     LOGGER.warn("Skipping user {}, due to empty key or value", key);
                 }
             }
