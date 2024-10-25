@@ -36,6 +36,7 @@ public class Main {
         if (config.getIfAuthenticationIsSaslScramAndPlain()) {
             String namespace = config.getNamespace();
             if (namespace == null || namespace.isEmpty()) {
+                LOGGER.error("Namespace is null or empty");
                 System.exit(1);
             }
 
@@ -45,6 +46,7 @@ public class Main {
                     .list();
             LOGGER.info("Process Secrets");
             if (!writer.writeFwssSecretsToJaasConf(namespace, secretList)) {
+                LOGGER.error("Failed to write fwss secrets");
                 System.exit(1);
             }
         }
