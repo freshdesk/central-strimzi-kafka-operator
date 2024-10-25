@@ -162,9 +162,13 @@ public class InitWriter {
         for (Secret secret : filteredSecrets) {
             Map<String, String> data = secret.getData();
             for (Map.Entry<String, String> entry : data.entrySet()) {
-                String key = entry.getKey();
+                String key = entry.getKey().trim();
                 String value = new String(java.util.Base64.getDecoder().decode(entry.getValue())).trim();
-                jaasConfig.append("  user_").append(key).append("=\"").append(value).append("\"\n");
+                if (!key.isEmpty() && !value.isEmpty()) {
+                    jaasConfig.append("  user_").append(key).append("=\"").append(value).append("\"\n");
+                }else {
+                    LOGGER.warn("Skipping user {}, due to empty key or value", key);
+                }
             }
         }
         // Replace the last newline character jaasConfig with ";"
