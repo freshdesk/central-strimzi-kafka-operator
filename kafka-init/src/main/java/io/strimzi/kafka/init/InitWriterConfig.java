@@ -25,6 +25,7 @@ import static io.strimzi.operator.common.config.ConfigParameterParser.STRING;
  */
 public class InitWriterConfig {
     private static final Logger LOGGER = LogManager.getLogger(InitWriterConfig.class);
+    // to know what namespace the pod is running in
     private static final String NAMESPACE_FILE_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/namespace";
     private static final Map<String, ConfigParameter<?>> CONFIG_VALUES = new HashMap<>();
     /**
