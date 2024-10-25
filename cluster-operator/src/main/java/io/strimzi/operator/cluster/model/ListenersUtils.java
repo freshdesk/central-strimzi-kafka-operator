@@ -37,7 +37,7 @@ public class ListenersUtils {
      * @return          True if any listener in the list is using sasl_scram_and_plain authentication. False otherwise.
      */
     public static boolean hasListenerWithSaslScramAndPLain(List<GenericKafkaListener> listeners)    {
-        return listeners.stream()
+        return internalListeners(listeners).stream()
                 .anyMatch(ListenersUtils::isListenerWithSaslScramAndPlain);
     }
 
