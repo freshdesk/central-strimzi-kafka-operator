@@ -116,7 +116,8 @@ export KAFKA_OPTS
 # Configure Garbage Collection logging
 . ./set_kafka_gc_options.sh
 
-if [ -f "/tmp/kafka_server_sasl_plain_jaas.conf" ]; then
+if [ -s "/tmp/kafka_server_sasl_plain_jaas.conf" ]; then
+  echo "Using SASL/PLAIN authentication with JAAS configuration"
   KAFKA_OPTS="${KAFKA_OPTS} -Djava.security.auth.login.config=/tmp/kafka_server_sasl_plain_jaas.conf"
 fi
 
