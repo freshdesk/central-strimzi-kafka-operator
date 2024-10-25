@@ -6,25 +6,14 @@ spec:
   kafka:
     version: 3.8.0
     replicas: 3
-    # livenessProbe:
-    #   initialDelaySeconds: 3600
-    #   timeoutSeconds: 3600
     template:
       initContainer:
         securityContext:
           allowPrivilegeEscalation: true
           readOnlyRootFilesystem: false
-        # env:
-        #   - name: JAVA_OPTS
-        #     value: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005"
-      # kafkaContainer:
-      #   env:
-      #   - name: KAFKA_DEBUG
-      #     value: "y"
-      #   - name: DEBUG_SUSPEND_FLAG
-      #     value: "y"
-      #   - name: JAVA_DEBUG_PORT
-      #     value: "5005"
+        env:
+          - name: FWSS_SECRETS_PREFIX
+            value: fwss
     rack:
       topologyKey: kubernetes.io/hostname
     brokerRackInitImage: localhost:5001/arunkbha/operator:latest
