@@ -34,7 +34,8 @@ public class Main {
         InitWriter writer = new InitWriter(client, config);
 
         if (config.getIfAuthenticationIsSaslScramAndPlain()) {
-            String namespace = config.getNamespace();
+            String namespace = client.getNamespace();
+
             if (namespace == null || namespace.isEmpty()) {
                 LOGGER.error("Namespace is null or empty");
                 System.exit(1);
@@ -42,7 +43,7 @@ public class Main {
 
             // List all secrets in the current namespace
             SecretList secretList = client.secrets().inNamespace(namespace)
-                    .withLabel("fwss.freshworks.com/secrets-managed", "true")
+                    .withLabel(config.getFwssLabelKey(), config.getFwssLabelValue())
                     .list();
             LOGGER.info("Process Secrets");
             if (!writer.writeFwssSecretsToJaasConf(namespace, secretList)) {
@@ -53,12 +54,14 @@ public class Main {
 
         if (config.getRackTopologyKey() != null) {
             if (!writer.writeRack()) {
+                LOGGER.error("Failed to write rack topology");
                 System.exit(1);
             }
         }
 
         if (config.isExternalAddress()) {
             if (!writer.writeExternalAddress()) {
+                LOGGER.error("Failed to write external address");
                 System.exit(1);
             }
         }
