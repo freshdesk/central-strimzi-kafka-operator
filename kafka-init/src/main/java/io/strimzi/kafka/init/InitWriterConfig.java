@@ -46,7 +46,7 @@ public class InitWriterConfig {
     /**
      * FWSS secret prefix to filter secrets
      */
-    public static final ConfigParameter<String> FWSS_SECRETS_PREFIX = new ConfigParameter<>("FWSS_SECRETS_PREFIX", STRING, "fwss", CONFIG_VALUES);
+    public static final ConfigParameter<String> FWSS_SECRETS_NAME = new ConfigParameter<>("FWSS_SECRETS_NAME", STRING, "central--kafka", CONFIG_VALUES);
     /**
      * Authentication is of type sasl_scram_and_plain or others.
      */
@@ -135,8 +135,8 @@ public class InitWriterConfig {
     /**
      * @return FWSS secret prefix to filter secrets
      */
-    public String getFwssSecretPrefix() {
-        return get(FWSS_SECRETS_PREFIX);
+    public String getFwssSecretName() {
+        return get(FWSS_SECRETS_NAME);
     }
 
     /**
@@ -169,10 +169,10 @@ public class InitWriterConfig {
                 ",externalAddress=" + isExternalAddress() +
                 ",initFolder=" + getInitFolder() +
                 ",addressType=" + getAddressType() +
-                ",fwssSecretPrefix=" + getFwssSecretPrefix() +
+                ",fwssSecretName=" + getFwssSecretName() +
                 ",authenticationIsSaslScramAndPlain=" + getIfAuthenticationIsSaslScramAndPlain() +
                 ",fwss_label_key=" + getFwssLabelKey() +
-                ",fwss_label_value" + getFwssLabelValue() +
+                ",fwss_label_value=" + getFwssLabelValue() +
                 ")";
     }
 }

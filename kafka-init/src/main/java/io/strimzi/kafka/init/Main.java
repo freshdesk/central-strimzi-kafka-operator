@@ -46,7 +46,7 @@ public class Main {
                     .withLabel(config.getFwssLabelKey(), config.getFwssLabelValue())
                     .list();
             LOGGER.info("Process Secrets");
-            if (!writer.writeFwssSecretsToJaasConf(namespace, secretList)) {
+            if (!writer.writeFwssSecretsToJaasConf(secretList)) {
                 LOGGER.error("Failed to write fwss secrets");
                 System.exit(1);
             }

@@ -12,8 +12,8 @@ spec:
           allowPrivilegeEscalation: true
           readOnlyRootFilesystem: false
         env:
-          - name: FWSS_SECRETS_PREFIX
-            value: fwss
+          - name: FWSS_SECRETS_NAME
+            value: central--kafka
     rack:
       topologyKey: kubernetes.io/hostname
     brokerRackInitImage: localhost:5001/arunkbha/operator:latest

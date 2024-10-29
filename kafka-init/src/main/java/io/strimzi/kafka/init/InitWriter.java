@@ -115,11 +115,10 @@ public class InitWriter {
     /**
      * Write the fwss user secrets to jaas.conf
      *
-     * @param namespace   The namespace in which kafka is running
-     * @param secretList   List of secrets in the namespace
+     * @param secretList   List of fwss secrets in the namespace
      * @return if the operation was executed successfully
      */
-    public boolean writeFwssSecretsToJaasConf(String namespace, SecretList secretList) {
+    public boolean writeFwssSecretsToJaasConf(SecretList secretList) {
 
         if (secretList.getItems().isEmpty()) {
             // no fwss labeled secrets, then exit
@@ -127,48 +126,59 @@ public class InitWriter {
             return false;
         }
         List<Secret> secrets = secretList.getItems();
-        List<Secret> filteredSecrets = secrets.stream()
-                .filter(secret -> secret.getMetadata().getName().startsWith(config.getFwssSecretPrefix()))
+        List<Secret> kafkaSecret = secrets.stream()
+                .filter(secret -> secret.getMetadata().getName().equals(config.getFwssSecretName()))
                 .toList();
-        if (filteredSecrets.isEmpty()) {
-            // no fwss secrets with the prefix, then exit
-            LOGGER.error("No secrets starting with '{}' found.", config.getFwssSecretPrefix());
+        if (kafkaSecret.isEmpty()) {
+            // no fwss secrets with the give name, then exit
+            LOGGER.error("No secrets with name '{}' found.", config.getFwssSecretName());
             return false;
         }
 
-        String adminSecretPrefix = config.getFwssSecretPrefix() + "-admin";
+        Map.Entry<String, String> adminNameAndSecret = kafkaSecret.get(0).getData().entrySet().iterator().next();
+        String kafkaFwssJaasConfig = new String(java.util.Base64.getDecoder().decode(adminNameAndSecret.getValue())).trim();
+        return configConvertAndWrite(kafkaFwssJaasConfig);
 
-        List<Secret> filteredAdminSecrets = secrets.stream()
-                .filter(secret -> secret.getMetadata().getName().startsWith(adminSecretPrefix))
-                .toList();
-        if (filteredAdminSecrets.isEmpty()) {
-            // no fwss secrets with the admin prefix, then exit
-            LOGGER.error("No admin secrets starting with '{}' found.", adminSecretPrefix);
-            return false;
-        } else if (filteredAdminSecrets.size() > 1) {
-            LOGGER.error("More than one admin secrets starting with '{}' found", adminSecretPrefix);
+    }
+
+    /**
+     * Convert fwss jaas secret to jaas config
+     *
+     * @param kafkaFwssJaasConfig   Information to be written
+     * @return              true if conversion succeeded, false otherwise
+     */
+    public boolean configConvertAndWrite(String kafkaFwssJaasConfig) {
+     
+        if (kafkaFwssJaasConfig.isEmpty()) {
+            LOGGER.error("KafkaFwssJaasConfig is empty");
             return false;
         }
+        // Removing braces and extra whitespace, then splitting by commas
+        String input = kafkaFwssJaasConfig.replaceAll("[{}\"]", "").trim();
+        String[] pairs = input.split(",");
 
-        Map.Entry<String, String> adminNameAndSecret = filteredAdminSecrets.get(0).getData().entrySet().iterator().next();
-        String adminUser = adminNameAndSecret.getKey();
-        String adminPassword = new String(java.util.Base64.getDecoder().decode(adminNameAndSecret.getValue())).trim();
+        // Initialize StringBuilder for formatted output
         StringBuilder jaasConfig = new StringBuilder();
         jaasConfig.append("KafkaServer {\n");
         jaasConfig.append("  org.apache.kafka.common.security.plain.PlainLoginModule required\n");
-        jaasConfig.append("  username").append("=\"").append(adminUser).append("\"\n");
-        jaasConfig.append("  password").append("=\"").append(adminPassword).append("\"\n");
 
-        for (Secret secret : filteredSecrets) {
-            Map<String, String> data = secret.getData();
-            for (Map.Entry<String, String> entry : data.entrySet()) {
-                String key = entry.getKey().trim();
-                String value = new String(java.util.Base64.getDecoder().decode(entry.getValue())).trim();
-                if (!key.isEmpty() && !value.isEmpty()) {
-                    jaasConfig.append("  user_").append(key).append("=\"").append(value).append("\"\n");
-                } else {
-                    LOGGER.warn("Skipping user {}, due to empty key or value", key);
+        // Process each key-value pair
+        for (String pair : pairs) {
+            String[] keyValue = pair.trim().split(":");
+            String key = keyValue[0].trim();
+            String username = keyValue[1].trim();
+            String password = keyValue[2].trim();
+
+            if (key.equals("kafka_admin")) {
+                if (username.isEmpty() || password.isEmpty()) {
+                    LOGGER.error("Either of admin username or password is empty");
+                    return false;
                 }
+                jaasConfig.append("  username=\"").append(username).append("\"\n");
+                jaasConfig.append("  password=\"").append(password).append("\"\n");
+                jaasConfig.append("  user_").append(username).append("=\"").append(password).append("\"\n");
+            } else if (key.startsWith("kafka_user")) {
+                jaasConfig.append("  user_").append(username).append("=\"").append(password).append("\"\n");
             }
         }
         // Replace the last newline character jaasConfig with ";"
