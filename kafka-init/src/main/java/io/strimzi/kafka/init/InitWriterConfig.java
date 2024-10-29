@@ -8,9 +8,6 @@ import io.strimzi.operator.common.config.ConfigParameter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,8 +22,6 @@ import static io.strimzi.operator.common.config.ConfigParameterParser.STRING;
  */
 public class InitWriterConfig {
     private static final Logger LOGGER = LogManager.getLogger(InitWriterConfig.class);
-    // to know what namespace the pod is running in
-    private static final String NAMESPACE_FILE_PATH = "/var/run/secrets/kubernetes.io/serviceaccount/namespace";
     private static final Map<String, ConfigParameter<?>> CONFIG_VALUES = new HashMap<>();
     /**
      * Folder where the rackid file is written
@@ -56,6 +51,14 @@ public class InitWriterConfig {
      * Authentication is of type sasl_scram_and_plain or others.
      */
     public static final ConfigParameter<String> AUTHENTICATION_IS_SASL_SCRAM_AND_PLAIN = new ConfigParameter<>("AUTHENTICATION_IS_SASL_SCRAM_AND_PLAIN", STRING, "false", CONFIG_VALUES);
+    /**
+     * The Fwss secrets label key that we should look for in the secrets while generating jaas.conf.
+     */
+    public static final ConfigParameter<String> FWSS_LABEL_KEY = new ConfigParameter<>("FWSS_LABEL_KEY", STRING, "fwss.freshworks.com/secrets-managed", CONFIG_VALUES);
+    /**
+     * The Fwss secrets label value that we should look for in the secrets while generating jaas.conf.
+     */
+    public static final ConfigParameter<String> FWSS_LABEL_VALUE = new ConfigParameter<>("FWSS_LABEL_VALUE", STRING, "true", CONFIG_VALUES);
     private final Map<String, Object> map;
 
     /**
@@ -137,27 +140,25 @@ public class InitWriterConfig {
     }
 
     /**
+     * @return FWSS secret label key that we should look for.
+     */
+    public String getFwssLabelKey() {
+        return get(FWSS_LABEL_KEY);
+    }
+
+    /**getRunningNamespace
+     * @return FWSS secret label value that we should look for.
+     */
+    public String getFwssLabelValue() {
+        return get(FWSS_LABEL_VALUE);
+    }
+
+    /**
      * @return if Authentication is of type sasl_scram_and_plain or others.
      */
     public boolean getIfAuthenticationIsSaslScramAndPlain() {
         String result = get(AUTHENTICATION_IS_SASL_SCRAM_AND_PLAIN);
         return result.equals("true");
-    }
-
-    /**
-     * Reads the namespace from the file and returns it as a string.
-     *
-     * @return The namespace of the pod.
-     */
-    public String getNamespace() {
-        String namespace;
-        try {
-            namespace = new String(Files.readAllBytes(Paths.get(NAMESPACE_FILE_PATH))).trim();
-        } catch (IOException e) {
-            namespace = "";
-            LOGGER.error("Reading namespace file failed", e);
-        }
-        return namespace;
     }
 
     @Override
@@ -170,7 +171,8 @@ public class InitWriterConfig {
                 ",addressType=" + getAddressType() +
                 ",fwssSecretPrefix=" + getFwssSecretPrefix() +
                 ",authenticationIsSaslScramAndPlain=" + getIfAuthenticationIsSaslScramAndPlain() +
-                ",namespace=" + getNamespace() +
+                ",fwss_label_key=" + getFwssLabelKey() +
+                ",fwss_label_value" + getFwssLabelValue() +
                 ")";
     }
 }
