@@ -13,7 +13,7 @@ spec:
           readOnlyRootFilesystem: false
         env:
           - name: FWSS_SECRETS_NAME
-            value: central--kafka
+            value: local--kafka
     rack:
       topologyKey: kubernetes.io/hostname
     brokerRackInitImage: localhost:5001/arunkbha/operator:latest

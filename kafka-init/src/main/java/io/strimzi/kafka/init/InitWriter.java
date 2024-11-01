@@ -4,6 +4,7 @@
  */
 package io.strimzi.kafka.init;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.NodeAddress;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretList;
@@ -137,6 +138,10 @@ public class InitWriter {
 
         Map.Entry<String, String> adminNameAndSecret = kafkaSecret.get(0).getData().entrySet().iterator().next();
         String kafkaFwssJaasConfig = new String(java.util.Base64.getDecoder().decode(adminNameAndSecret.getValue())).trim();
+        if (!isValidJSON(kafkaFwssJaasConfig)) {
+            LOGGER.error("Invalid JSON format for KafkaFwssJaasConfig");
+            return false;
+        }
         return configConvertAndWrite(kafkaFwssJaasConfig);
 
     }
@@ -186,6 +191,22 @@ public class InitWriter {
         jaasConfig.append("\n};");
 
         return write(FILE_JAAS_CONF, jaasConfig.toString());
+    }
+
+    /**
+     * Checks if the provided string is a valid JSON
+     *
+     * @param jsonString   string to be checked
+     * @return             true if valid json succeeded, false otherwise
+     */
+    private boolean isValidJSON(String jsonString) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.readTree(jsonString);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /**
