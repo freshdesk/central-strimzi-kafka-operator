@@ -7,6 +7,11 @@ metadata:
 spec:
   authentication:
     type: scram-sha-512
+    password:
+      valueFrom:
+        secretKeyRef:
+          name: my-user-secret
+          key: password
   authorization:
     type: simple
     acls:
@@ -36,3 +41,13 @@ spec:
           - Describe
           - Write
         host: "*"
+---
+# Update the secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-user-secret
+type: Opaque
+data:
+  # base64 encoded password
+  password: bmV3LXBhc3N3b3Jk
