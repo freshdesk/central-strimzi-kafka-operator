@@ -14,6 +14,10 @@ spec:
         env:
           - name: FWSS_SECRETS_NAME
             value: local--kafka
+          - name: FWSS_LABEL_KEY
+            value: fwss.freshworks.com/secrets-managed
+          - name: FWSS_LABEL_VALUE
+            value: "true"
     rack:
       topologyKey: kubernetes.io/hostname
     brokerRackInitImage: localhost:5001/arunkbha/operator:latest
