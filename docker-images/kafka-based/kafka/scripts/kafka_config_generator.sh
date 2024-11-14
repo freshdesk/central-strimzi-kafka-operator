@@ -22,7 +22,7 @@ if [ -e "$NODE_PORT_CONFIG_FILE" ]; then
 fi
 
 if [ -f "$KAFKA_HOME/init/jaas.conf" ]; then
-  cp -v "$KAFKA_HOME/init/jaas.conf" "/tmp/kafka_server_sasl_plain_jaas.conf"
+  cp "$KAFKA_HOME/init/jaas.conf" "/tmp/kafka_server_sasl_plain_jaas.conf"
 fi
 
 LISTENERS_FILE="$KAFKA_HOME/custom-config/listeners.config"

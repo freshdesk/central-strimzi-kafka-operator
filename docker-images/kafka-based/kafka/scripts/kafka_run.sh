@@ -119,6 +119,9 @@ export KAFKA_OPTS
 if [ -s "/tmp/kafka_server_sasl_plain_jaas.conf" ]; then
   echo "Using SASL/PLAIN authentication with JAAS configuration"
   KAFKA_OPTS="${KAFKA_OPTS} -Djava.security.auth.login.config=/tmp/kafka_server_sasl_plain_jaas.conf"
+else
+  echo "No valid JAAS configuration file found. Ensure /tmp/kafka_server_sasl_plain_jaas.conf exists and is not empty."
+  echo "Kafka will not be started with SASL/PLAIN authentication."
 fi
 
 set -x
